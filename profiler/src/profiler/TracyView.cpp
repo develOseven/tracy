@@ -706,8 +706,6 @@ bool View::Draw()
 
     if( !m_staticView &&
         ( ImGui::IsKeyDown( ImGuiKey_LeftCtrl ) || ImGui::IsKeyDown( ImGuiKey_RightCtrl ) ) &&
-        ( ImGui::IsKeyDown( ImGuiKey_LeftShift ) || ImGui::IsKeyDown( ImGuiKey_RightShift ) ) &&
-        ( ImGui::IsKeyDown( ImGuiKey_LeftAlt ) || ImGui::IsKeyDown( ImGuiKey_RightAlt ) ) &&
         ImGui::IsKeyPressed( ImGuiKey_R ) )
     {
         m_reconnectRequested = true;
