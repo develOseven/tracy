@@ -832,23 +832,21 @@ public:
     }
 #endif
 
-    static uint32_t SectionEnter( uint16_t category, const char* fmt, ... ) TRACY_ATTRIBUTE_FORMAT_PRINTF( 2, 3 )
+    static uint32_t SectionEnterV( uint16_t category, const char* fmt, va_list args ) TRACY_ATTRIBUTE_FORMAT_PRINTF( 2, 0 )
     {
         auto& profiler = GetProfiler();
 #ifdef TRACY_ON_DEMAND
         if( !profiler.IsConnected() ) return 0;
 #endif
-        va_list args;
-        va_start( args, fmt );
-        auto size = vsnprintf( nullptr, 0, fmt, args );
-        va_end( args );
+        va_list args2;
+        va_copy( args2, args );
+        auto size = vsnprintf( nullptr, 0, fmt, args2 );
+        va_end( args2 );
         if( size < 0 ) return 0;
         TRACY_ASSERT( size < (std::numeric_limits<uint16_t>::max)() );
 
         char* ptr = (char*)tracy_malloc( size_t( size ) + 1 );
-        va_start( args, fmt );
         vsnprintf( ptr, size_t( size ) + 1, fmt, args );
-        va_end( args );
 
         const auto id = profiler.GetNextSectionId();
         TracyLfqPrepare( QueueType::SectionEnter );
@@ -858,6 +856,15 @@ public:
         MemWrite( &item->sectionEnterFat.text, (uint64_t)ptr );
         MemWrite( &item->sectionEnterFat.size, (uint16_t)size );
         TracyLfqCommit;
+        return id;
+    }
+
+    static uint32_t SectionEnter( uint16_t category, const char* fmt, ... ) TRACY_ATTRIBUTE_FORMAT_PRINTF( 2, 3 )
+    {
+        va_list args;
+        va_start( args, fmt );
+        uint32_t id = SectionEnterV( category, fmt, args );
+        va_end( args );
         return id;
     }
 
@@ -873,19 +880,17 @@ public:
         TracyLfqCommit;
     }
 
-    static void SectionSetup( uint16_t category, const char* fmt, ... ) TRACY_ATTRIBUTE_FORMAT_PRINTF( 2, 3 )
+    static void SectionSetupV( uint16_t category, const char* fmt, va_list args ) TRACY_ATTRIBUTE_FORMAT_PRINTF( 2, 0 )
     {
-        va_list args;
-        va_start( args, fmt );
-        auto size = vsnprintf( nullptr, 0, fmt, args );
-        va_end( args );
+        va_list args2;
+        va_copy( args2, args );
+        auto size = vsnprintf( nullptr, 0, fmt, args2 );
+        va_end( args2 );
         if( size < 0 ) return;
         TRACY_ASSERT( size < (std::numeric_limits<uint16_t>::max)() );
 
         char* ptr = (char*)tracy_malloc( size_t( size ) + 1 );
-        va_start( args, fmt );
         vsnprintf( ptr, size_t( size ) + 1, fmt, args );
-        va_end( args );
 
         TracyLfqPrepare( QueueType::SectionSetup );
         MemWrite( &item->sectionSetupFat.category, category );
@@ -897,6 +902,14 @@ public:
 #endif
 
         TracyLfqCommit;
+    }
+
+    static void SectionSetup( uint16_t category, const char* fmt, ... ) TRACY_ATTRIBUTE_FORMAT_PRINTF( 2, 3 )
+    {
+        va_list args;
+        va_start( args, fmt );
+        SectionSetupV( category, fmt, args );
+        va_end( args );
     }
 
     void SendCallstack( int32_t depth, const char** skipBefore );
